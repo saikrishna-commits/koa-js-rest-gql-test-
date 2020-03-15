@@ -13,12 +13,32 @@ const compose = require('koa-compose');
 const compress = require("koa-compress")
 const cors = require('@koa/cors');
 const { ApolloServer } = require("apollo-server-koa");
+//* packages needed for auth 
+const jwt = require('koa-jwt');
+const jsonwebtoken = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+
 const app = new Koa();
 const router = new Router();
 const userRouter = new Router({ prefix: "/users" })
 
 const { typeDefs } = require('./graphql/types')
 const { resolvers } = require('./graphql/resolvers')
+
+const secret = process.env.JWT_SECRET || 'jwt_secret';
+
+const users = []
+
+const getUserByUsername = (username, users) => {
+    let user;
+    for (let i = 0; i < users.length; i++) {
+        user = users[i];
+        if (user.username === username) {
+            return user;
+        }
+    }
+    return null;
+}
 
 
 
@@ -29,10 +49,6 @@ const legacyResponseTimeCalc = function* responseTime(next) {
     this.set("X-Response-Time", `${ms} ms`);
 }
 
-
-
-
-
 const formatResponse = (response, args) => {
     console.log("queryString : ", args.queryString);
     console.log("variables : ", args.variables);
@@ -40,7 +56,6 @@ const formatResponse = (response, args) => {
 };
 
 const gqlServer = new ApolloServer({ typeDefs, resolvers, formatResponse });
-
 
 //* error handling purpose
 app.use(async (ctx, next) => {
@@ -96,6 +111,92 @@ app.use(compress({
     threshold: 2048,
     flush: require('zlib').Z_SYNC_FLUSH
 }));
+
+app.use(jwt({
+    secret: secret
+}).unless({
+    path: [/^\/public/, "/"]
+}));
+
+/*
+ * You can register with:
+ * curl -X POST --data '{"username":"atom", "password":"abides", "email":"atom@koa.com", "name":"Mr.Atom"}' http://localhost:3000/public/register
+ */
+router.post('/public/register', async (ctx, next) => {
+    const { username, password, email, name } = ctx.request.body
+
+    console.log(ctx.request.body)
+    if (!username || !password || !email || !name) {
+        ctx.status = 400;
+        ctx.body = {
+            error: 'expected an object with username, password, email, name but got: ' + ctx.request.body
+        }
+        return;
+    }
+
+    ctx.request.body.password = await bcrypt.hash(password, 5);
+    const user = getUserByUsername(username, users);
+    if (!user) {
+        users.push(ctx.request.body);
+        ctx.status = 200;
+        ctx.body = {
+            message: "success"
+        };
+        next();
+    } else {
+        ctx.status = 406;
+        ctx.body = {
+            error: "User exists"
+        }
+        return;
+    }
+});
+
+/**
+ * You can login with:
+ * curl -X POST -H "Content-Type: application/json" --data '{"username":"thedude", "password":"abides"}' http://localhost:9000/public/login
+ */
+router.post('/public/login', async (ctx, next) => {
+    const { username } = ctx.request.body
+    let user = await getUserByUsername(username, users);
+    if (!user) {
+        ctx.status = 401;
+        ctx.body = {
+            error: "bad username"
+        }
+        return;
+    }
+    const {
+        password,
+        ...userInfoWithoutPassword
+    } = user;
+    if (await bcrypt.compare(ctx.request.body.password, password)) {
+        ctx.body = {
+            token: jsonwebtoken.sign({
+                data: userInfoWithoutPassword,
+                //exp in seconds
+                exp: Math.floor(Date.now() / 1000) - (60 * 60) // 60 seconds * 60 minutes = 1 hour
+            }, secret)
+        }
+        next();
+    } else {
+        ctx.status = 401;
+        ctx.body = {
+            error: "bad password"
+        }
+        return;
+    }
+});
+
+/**
+ * After you login and get a token you can access
+ * this (and any other non public endpoint) with:
+ * curl -X GET -H "Authorization: Bearer INSERT_TOKEN_HERE" http://localhost:3000/sacred
+ */
+router.get('/api/v1', async (ctx) => {
+    ctx.body = 'Hello ' + ctx.state.user.data.name
+});
+
 
 require('./routes/index')({ router });
 app.use(router.routes()).use(router.allowedMethods());
