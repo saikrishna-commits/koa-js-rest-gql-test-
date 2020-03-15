@@ -34,7 +34,8 @@ const formatResponse = (response, args) => {
 const gqlServer = new ApolloServer({ typeDefs, resolvers, formatResponse });
 
 
-app.use(logger());
+if (process.env.NODE_ENV === 'development')
+    app.use(logger());
 app.use(cors())
 app.use(bodyParser());
 
