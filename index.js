@@ -51,22 +51,20 @@ app.use(async (ctx, next) => {
 });
 
 
+//response time mdw using fn generator
 
-
-
-
+app.use(function* responseTime(next) {
+    const start = new Date;
+    yield next;
+    const ms = new Date - start;
+    this.set("X-Response-Time", `${ms} ms`);
+})
 
 require('./routes/index')({ router });
 app.use(router.routes()).use(router.allowedMethods());
 
-
-
 require('./routes/user')({ userRouter })
 app.use(userRouter.routes()).use(userRouter.allowedMethods({ throw: true }))
-
-
-
-
 
 app.on('error', (err, ctx) => {
     console.error('server error', err, ctx)
