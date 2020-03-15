@@ -8,12 +8,20 @@ const Router = require('koa-router');
 const logger = require('koa-logger');
 const bodyParser = require("koa-bodyparser")
 const prettyJson = require('koa-json')
+const convert = require('koa-convert')
 const cors = require('@koa/cors');
 const { ApolloServer, gql } = require("apollo-server-koa");
 const app = new Koa();
 const router = new Router();
 const userRouter = new Router({ prefix: "/users" })
 
+
+const legacyResponseTimeCalc = function* responseTime(next) {
+    const start = new Date;
+    yield next;
+    const ms = new Date - start;
+    this.set("X-Response-Time", `${ms} ms`);
+}
 
 //* gql types
 
@@ -68,12 +76,9 @@ app.use(bodyParser.urlencoded({ extended: ture })) //* for parsing application/x
 
 //* response time mdw using fn generator (going to deprecate this pattern)
 
-app.use(function* responseTime(next) {
-    const start = new Date;
-    yield next;
-    const ms = new Date - start;
-    this.set("X-Response-Time", `${ms} ms`);
-})
+//* to avoid there is mdw which offers to convert legacy mdw to modern !!!
+
+app.use(convert(legacyResponseTimeCalc))
 
 async function calculateResponseTime(ctx, next) {
     console.log('Started tracking response time')
