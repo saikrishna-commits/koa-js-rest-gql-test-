@@ -12,10 +12,14 @@ const convert = require('koa-convert')
 const compose = require('koa-compose');
 const compress = require("koa-compress")
 const cors = require('@koa/cors');
-const { ApolloServer, gql } = require("apollo-server-koa");
+const { ApolloServer } = require("apollo-server-koa");
 const app = new Koa();
 const router = new Router();
 const userRouter = new Router({ prefix: "/users" })
+
+const { typeDefs } = require('./graphql/types')
+const { resolvers } = require('./graphql/resolvers')
+
 
 
 const legacyResponseTimeCalc = function* responseTime(next) {
@@ -25,20 +29,9 @@ const legacyResponseTimeCalc = function* responseTime(next) {
     this.set("X-Response-Time", `${ms} ms`);
 }
 
-//* gql types
 
-const typeDefs = gql`
-  type Query {
-    hello: String
-  }
-`;
 
-//* gql resolvers
-const resolvers = {
-    Query: {
-        hello: () => "Hello world!"
-    }
-};
+
 
 const formatResponse = (response, args) => {
     console.log("queryString : ", args.queryString);
