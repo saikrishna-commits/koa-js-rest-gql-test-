@@ -18,7 +18,8 @@
     "koa-convert": "^1.2.0",
     "koa-json": "^2.0.2",
     "koa-logger": "^3.2.1",
-    "koa-router": "^8.0.8"
+    "koa-router": "^8.0.8",
+    "mysql": "^2.18.1"
   },
   "devDependencies": {
     "eslint-config-koa": "^2.0.2",
