@@ -68,8 +68,8 @@ app.use(cors()) //* allow requests from anyother origins running on different po
 
 
 //* add parser mdw (internally listens on req.on("data") and constructs accordingly )
-app.use(bodyParser.json()); //* for parsing application/json
-app.use(bodyParser.urlencoded({ extended: ture })) //* for parsing application/x-www-form-urlencoded
+app.use(bodyParser()); //* for parsing application/json
+//* for parsing application/x-www-form-urlencoded
 
 
 
