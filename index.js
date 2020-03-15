@@ -18,6 +18,8 @@ const jwt = require('koa-jwt');
 const jsonwebtoken = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
+const mongo = require('koa-mongo')
+
 const app = new Koa();
 const router = new Router();
 const userRouter = new Router({ prefix: "/users" })
@@ -193,9 +195,28 @@ router.post('/public/login', async (ctx, next) => {
  * this (and any other non public endpoint) with:
  * curl -X GET -H "Authorization: Bearer INSERT_TOKEN_HERE" http://localhost:3000/sacred
  */
+
+
+
+app.use(mongo({
+    uri: 'mongodb://admin:123456@localhost:27017/test?authSource=admin', //or url
+    max: 100,
+    min: 1
+}, {
+        useUnifiedTopology: true
+    }
+));
+
+
 router.get('/api/v1', async (ctx) => {
     ctx.body = 'Hello ' + ctx.state.user.data.name
 });
+
+
+router.get('/mongoUsage', async (ctx) => {
+    const result = await ctx.mongo.db('dbName').collection('collectionName').find({})
+    ctx.body = result
+})
 
 
 require('./routes/index')({ router });
