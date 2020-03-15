@@ -44,8 +44,6 @@ module.exports = ({ userRouter }) => {
 
     userRouter.post(`/mysqlUsersDemo/:id`, async (ctx, next) => {
         const { id } = ctx.params
-
-        console.log('_____', id)
         try {
             //* Find user from table
 
