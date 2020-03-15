@@ -5,9 +5,7 @@ const server = require('../index');
 const request = require('supertest');
 const assert = require('assert');
 
-const VALID_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJuYW1lIjoidGhlZHVkZSIsIm5' +
-    'hbWUiOiJNci4gTGVib3dza2kifSwiZXhwIjo0NjU4NTkxNzEzLCJpYXQiOjE1MDQ5OTE3MTN9.nZqc6O' +
-    'SdccIx4NXovqqHW5iXAyIsPhEkT2SiwyW1LvU';
+const VALID_TOKEN = process.env.VALID_TOKEN
 
 const EXPIRED_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJuYW1lIjoidGhlZHVkZSIsIm5' +
     'hbWUiOiJNci4gTGVib3dza2kifSwiZXhwIjoxNTA0OTkxODIxLCJpYXQiOjE1MDQ5OTE4MjJ9.llUQYi' +
@@ -64,7 +62,7 @@ describe('Login example', () => {
     it('should allow POST requests to the "public/login" route', done => {
         request(server)
             .post('/public/login')
-            .send({ username: 'user1', password: 'password1' })
+            .send({ username: 'atom', password: 'atom' })
             .set('Accept', 'application/json')
             .expect(200)
             .end(done);
