@@ -10,6 +10,7 @@ const bodyParser = require("koa-bodyparser")
 const prettyJson = require('koa-json')
 const convert = require('koa-convert')
 const compose = require('koa-compose');
+const compress = require("koa-compress")
 const cors = require('@koa/cors');
 const { ApolloServer, gql } = require("apollo-server-koa");
 const app = new Koa();
@@ -94,6 +95,14 @@ async function calculateResponseTime(ctx, next) {
 const allMdws = compose([calculateResponseTime, convert(legacyResponseTimeCalc)]);
 
 app.use(allMdws)
+
+app.use(compress({
+    filter: function (content_type) {
+        return /text/i.test(content_type)
+    },
+    threshold: 2048,
+    flush: require('zlib').Z_SYNC_FLUSH
+}));
 
 require('./routes/index')({ router });
 app.use(router.routes()).use(router.allowedMethods());
