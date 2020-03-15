@@ -9,6 +9,7 @@ const logger = require('koa-logger');
 const bodyParser = require("koa-bodyparser")
 const prettyJson = require('koa-json')
 const convert = require('koa-convert')
+const compose = require('koa-compose');
 const cors = require('@koa/cors');
 const { ApolloServer, gql } = require("apollo-server-koa");
 const app = new Koa();
@@ -90,7 +91,9 @@ async function calculateResponseTime(ctx, next) {
     ctx.set('X-ResponseTime', ellapsed)
 }
 
-app.use(calculateResponseTime)
+const allMdws = compose([calculateResponseTime, convert(legacyResponseTimeCalc)]);
+
+app.use(allMdws)
 
 require('./routes/index')({ router });
 app.use(router.routes()).use(router.allowedMethods());
