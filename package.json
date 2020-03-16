@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "jest --watchAll"
+    "test": "jest --watchAll",
+    "start": "node index.js"
   },
   "dependencies": {
     "@koa/cors": "^3.0.0",
